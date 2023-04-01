@@ -41,11 +41,11 @@ func (e *EnvRedisServer) GetDialerDefault() *EnvRedisServerDialer {
 }
 
 type EnvRedisServerWorker struct {
-	Interval uint8 `yaml:"Interval,omitempty" default:"1"`
+	Interval uint16 `yaml:"Interval,omitempty" default:"1000"`
 }
 
 func (e *EnvRedisServer) GetWorkerDefault() *EnvRedisServerWorker {
-	d := EnvRedisServerWorker{Interval: 1}
+	d := EnvRedisServerWorker{Interval: 1000}
 	return &d
 }
 
