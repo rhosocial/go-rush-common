@@ -1,8 +1,12 @@
 package component
 
 import (
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 	"math/rand"
+	"net/http"
+	"net/http/httptest"
 	"strconv"
 	"testing"
 )
@@ -22,5 +26,48 @@ func TestValidatePassword(t *testing.T) {
 				t.Error("Password compared not equal.")
 			}
 		}
+	})
+}
+
+func setupRouter() *gin.Engine {
+	r := gin.New()
+	r.Use(AuthRequired())
+	r.GET("/ping", func(c *gin.Context) {
+		c.String(http.StatusOK, "pong")
+	})
+	return r
+}
+
+func TestUserAuthRequired(t *testing.T) {
+	r := setupRouter()
+
+	t.Run("Missing header", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodGet, "/ping", nil)
+
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusForbidden, w.Code)
+	})
+
+	t.Run("Header exists, but with wrong value", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodGet, "/ping", nil)
+		req.Header.Add(HeaderXAuthorizationToken, "1")
+
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusForbidden, w.Code)
+	})
+
+	t.Run("Header exists with correct value", func(t *testing.T) {
+		result, _ := bcrypt.GenerateFromPassword([]byte("password"), 13)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest(http.MethodGet, "/ping", nil)
+		req.Header.Add(HeaderXAuthorizationToken, string(result))
+
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
 	})
 }

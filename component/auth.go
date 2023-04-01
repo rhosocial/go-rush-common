@@ -14,6 +14,10 @@ func AuthRequired() gin.HandlerFunc {
 	return authHandlerFunc
 }
 
+const HeaderXAuthorizationToken = "X-Authorization-Token"
+const MessageMissingHeaderXAuthorizationToken = "empty authorization token"
+const MessageInvalidAuthorizationToken = "invalid authorization token"
+
 type HeaderAuthorizationToken struct {
 	AuthorizationToken string `header:"X-Authorization-Token" binding:"required"`
 }
@@ -26,9 +30,9 @@ func authHandlerFunc(c *gin.Context) {
 	h := HeaderAuthorizationToken{}
 	err := c.ShouldBindHeader(&h)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusForbidden, GenericResponse{Code: 1, Message: "empty authorization token"})
+		c.AbortWithStatusJSON(http.StatusForbidden, GenericResponse{Code: 1, Message: MessageMissingHeaderXAuthorizationToken})
 	} else if !h.validate("password") {
-		c.AbortWithStatusJSON(http.StatusForbidden, GenericResponse{Code: 1, Message: "invalid authorization token"})
+		c.AbortWithStatusJSON(http.StatusForbidden, GenericResponse{Code: 1, Message: MessageInvalidAuthorizationToken})
 	}
 	c.Next()
 }
