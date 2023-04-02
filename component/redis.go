@@ -2,6 +2,7 @@ package component
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/redis/go-redis/v9"
 	"net"
@@ -16,11 +17,27 @@ type RedisClientPool struct {
 
 var RedisServerTurn atomic.Uint32
 
+// GetCurrentTurn 获得当前活动 redis 客户端顺序。如果没有活动客户端，则返回 nil。
+// 注意！如果某个 Redis 服务器的权重大于1，则意味着该服务器将被询问多次。
 func (c *RedisClientPool) GetCurrentTurn() *uint8 {
 	if c.clients == nil || len(*c.clients) == 0 {
 		return nil
 	}
-	return &c.turnMap[RedisServerTurn.Add(1)%uint32(len(c.turnMap))]
+	now := RedisServerTurn.Load() % uint32(len(c.turnMap))
+	next := RedisServerTurn.Add(1) % uint32(len(c.turnMap))
+	status := *c.GetRedisServerStatus(context.Background(), c.turnMap[next])
+	for {
+		if now == next && !status.Valid {
+			return nil
+		}
+		if now != next && !status.Valid {
+			next = RedisServerTurn.Add(1) % uint32(len(c.turnMap))
+			status = *c.GetRedisServerStatus(context.Background(), c.turnMap[next])
+			continue
+		}
+		break
+	}
+	return &c.turnMap[next]
 }
 
 func (c *RedisClientPool) GetCurrentClient() *redis.Client {
@@ -99,21 +116,32 @@ type RedisServerStatus struct {
 	Message string `json:"message"`
 }
 
-func (c *RedisClientPool) GetRedisServerStatus(ctx context.Context) map[uint8]RedisServerStatus {
+var ErrRedisClientNil = errors.New("redis client nil")
+
+func (c *RedisClientPool) GetRedisServerStatus(ctx context.Context, idx uint8) *RedisServerStatus {
+	client := (*c.clients)[idx]
+	if client == nil {
+		panic(ErrRedisClientNil)
+	}
+	poolStats := client.PoolStats()
+	status := RedisServerStatus{
+		Valid: false,
+	}
+	if _, err := client.Ping(ctx).Result(); err == nil {
+		status.Valid = true
+		status.Message = fmt.Sprintf("命中:%d, 未命中:%d, 超时:%d, 总连接:%d, 空闲连接:%d, 失效连接:%d.", poolStats.Hits, poolStats.Misses, poolStats.Timeouts, poolStats.TotalConns, poolStats.IdleConns, poolStats.StaleConns)
+	} else {
+		status.Valid = false
+		status.Message = err.Error()
+	}
+	return &status
+}
+
+func (c *RedisClientPool) GetRedisServersStatus(ctx context.Context) map[uint8]RedisServerStatus {
 	result := make(map[uint8]RedisServerStatus)
-	for i, c := range *c.clients {
-		status := RedisServerStatus{
-			Valid: false,
-		}
-		poolStats := c.PoolStats()
-		if _, err := c.Ping(ctx).Result(); err != nil {
-			status.Valid = false
-			status.Message = err.Error()
-		} else {
-			status.Valid = true
-			status.Message = fmt.Sprintf("命中:%d, 未命中:%d, 超时:%d, 总连接:%d, 空闲连接:%d, 失效连接:%d.", poolStats.Hits, poolStats.Misses, poolStats.Timeouts, poolStats.TotalConns, poolStats.IdleConns, poolStats.StaleConns)
-		}
-		result[uint8(i)] = status
+	for i := 0; i < len(*c.clients); i++ {
+		status := c.GetRedisServerStatus(ctx, uint8(i))
+		result[uint8(i)] = *status
 	}
 	return result
 }
