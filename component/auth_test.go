@@ -1,6 +1,7 @@
 package component
 
 import (
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
@@ -48,6 +49,9 @@ func TestUserAuthRequired(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusForbidden, w.Code)
+		body := GenericResponse{}
+		assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
+		assert.Equal(t, MessageMissingHeaderXAuthorizationToken, body.Message)
 	})
 
 	t.Run("Header exists, but with wrong value", func(t *testing.T) {
@@ -58,6 +62,9 @@ func TestUserAuthRequired(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusForbidden, w.Code)
+		body := GenericResponse{}
+		assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
+		assert.Equal(t, MessageInvalidAuthorizationToken, body.Message)
 	})
 
 	t.Run("Header exists with correct value", func(t *testing.T) {
@@ -69,5 +76,6 @@ func TestUserAuthRequired(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, "pong", w.Body.String())
 	})
 }
