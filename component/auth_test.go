@@ -13,8 +13,8 @@ import (
 )
 
 func TestValidatePassword(t *testing.T) {
-	t.Run("Generating 5 password hashes", func(t *testing.T) {
-		for i := 0; i < 5; i++ {
+	t.Run("Generating 10 password hashes", func(t *testing.T) {
+		for i := 0; i < 10; i++ {
 			result, _ := bcrypt.GenerateFromPassword([]byte("password"), i+4)
 			t.Log(string(result))
 		}
@@ -30,9 +30,12 @@ func TestValidatePassword(t *testing.T) {
 	})
 }
 
-func setupRouter() *gin.Engine {
+func setupRouterAuthRequired(useNextFunc func()) *gin.Engine {
 	r := gin.New()
 	r.Use(AuthRequired())
+	r.Use(func(c *gin.Context) {
+		useNextFunc()
+	})
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
 	})
@@ -40,9 +43,13 @@ func setupRouter() *gin.Engine {
 }
 
 func TestUserAuthRequired(t *testing.T) {
-	r := setupRouter()
+	useNext := false
+	r := setupRouterAuthRequired(func() {
+		useNext = true
+	})
 
 	t.Run("Missing header", func(t *testing.T) {
+		useNext = false
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest(http.MethodGet, "/ping", nil)
 
@@ -52,9 +59,11 @@ func TestUserAuthRequired(t *testing.T) {
 		body := GenericResponse{}
 		assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
 		assert.Equal(t, MessageMissingHeaderXAuthorizationToken, body.Message)
+		assert.Equal(t, false, useNext)
 	})
 
 	t.Run("Header exists, but with wrong value", func(t *testing.T) {
+		useNext = false
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest(http.MethodGet, "/ping", nil)
 		req.Header.Add(HeaderXAuthorizationToken, "1")
@@ -65,10 +74,12 @@ func TestUserAuthRequired(t *testing.T) {
 		body := GenericResponse{}
 		assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
 		assert.Equal(t, MessageInvalidAuthorizationToken, body.Message)
+		assert.Equal(t, false, useNext)
 	})
 
 	t.Run("Header exists with correct value", func(t *testing.T) {
 		result, _ := bcrypt.GenerateFromPassword([]byte("password"), 13)
+		useNext = false
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest(http.MethodGet, "/ping", nil)
 		req.Header.Add(HeaderXAuthorizationToken, string(result))
@@ -77,5 +88,6 @@ func TestUserAuthRequired(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Equal(t, "pong", w.Body.String())
+		assert.Equal(t, true, useNext)
 	})
 }
