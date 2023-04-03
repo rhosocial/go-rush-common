@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"github.com/redis/go-redis/v9"
 	"net"
 	"sync/atomic"
@@ -48,8 +49,13 @@ func (c *RedisClientPool) GetCurrentClient() *redis.Client {
 }
 
 type EnvRedisServerDialer struct {
-	KeepAlive uint8 `yaml:"KeepAlive,omitempty" default:"5"`
-	Timeout   uint8 `yaml:"Timeout,omitempty" default:"1"`
+	KeepAlive uint8 `yaml:"KeepAlive,omitempty" default:"5" validate:"min=1,max=10"`
+	Timeout   uint8 `yaml:"Timeout,omitempty" default:"1" validate:"min=1,max=10"`
+}
+
+func (e *EnvRedisServerDialer) Validate() error {
+	validate := validator.New()
+	return validate.Struct(e)
 }
 
 func (e *EnvRedisServer) GetDialerDefault() *EnvRedisServerDialer {
@@ -58,7 +64,12 @@ func (e *EnvRedisServer) GetDialerDefault() *EnvRedisServerDialer {
 }
 
 type EnvRedisServerWorker struct {
-	Interval uint16 `yaml:"Interval,omitempty" default:"1000"`
+	Interval uint16 `yaml:"Interval,omitempty" default:"1000" validate:"min=100,max=60000"`
+}
+
+func (e *EnvRedisServerWorker) Validate() error {
+	validate := validator.New()
+	return validate.Struct(e)
 }
 
 func (e *EnvRedisServer) GetWorkerDefault() *EnvRedisServerWorker {
@@ -71,10 +82,29 @@ type EnvRedisServer struct {
 	Port     uint16                `yaml:"Port,omitempty" default:"6379"`
 	Username string                `yaml:"Username,omitempty" default:""`
 	Password string                `yaml:"Password,omitempty" default:""`
-	DB       int                   `yaml:"DB,omitempty" default:"0"`
-	Weight   uint8                 `yaml:"Weight,omitempty" default:"1"`
+	DB       int                   `yaml:"DB,omitempty" default:"0" validate:"min=0,max=15"`
+	Weight   uint8                 `yaml:"Weight,omitempty" default:"1" validate:"min=1,max=10"`
 	Dialer   *EnvRedisServerDialer `yaml:"Dialer,omitempty"`
 	Worker   *EnvRedisServerWorker `yaml:"Worker,omitempty"`
+}
+
+func (e *EnvRedisServer) Validate() error {
+	if e.Dialer != nil {
+		if err := e.Dialer.Validate(); err != nil {
+			return err
+		}
+	} else {
+		e.Dialer = e.GetDialerDefault()
+	}
+	if e.Worker != nil {
+		if err := e.Worker.Validate(); err != nil {
+			return err
+		}
+	} else {
+		e.Worker = e.GetWorkerDefault()
+	}
+	validate := validator.New()
+	return validate.Struct(e)
 }
 
 func (e *EnvRedisServer) GetRedisOptions() *redis.Options {
