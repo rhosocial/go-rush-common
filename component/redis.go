@@ -18,6 +18,9 @@ type RedisClientPool struct {
 
 var RedisServerTurn atomic.Uint32
 
+var ErrRedisClientNil = errors.New("redis client nil")
+var ErrRedisClientsNotAvailable = errors.New("redis client(s) not available")
+
 // GetCurrentTurn 获得当前活动 redis 客户端顺序。如果没有活动客户端，则报 ErrRedisClientNil 错误。
 // 注意！如果某个 Redis 服务器的权重大于1，则意味着该服务器将被询问多次。
 func (c *RedisClientPool) GetCurrentTurn() *uint8 {
@@ -29,7 +32,7 @@ func (c *RedisClientPool) GetCurrentTurn() *uint8 {
 	status := *c.GetRedisServerStatus(context.Background(), c.turnMap[next])
 	for {
 		if now == next && !status.Valid {
-			panic(ErrRedisClientNil)
+			panic(ErrRedisClientsNotAvailable)
 		}
 		if now != next && !status.Valid {
 			next = RedisServerTurn.Add(1) % uint32(len(c.turnMap))
@@ -146,8 +149,6 @@ type RedisServerStatus struct {
 	Valid   bool   `json:"valid"`
 	Message string `json:"message"`
 }
-
-var ErrRedisClientNil = errors.New("redis client nil")
 
 func (c *RedisClientPool) GetRedisServerStatus(ctx context.Context, idx uint8) *RedisServerStatus {
 	client := (*c.clients)[idx]
