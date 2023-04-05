@@ -1,4 +1,4 @@
-module go-rush-common
+module github.com/rhosocial/go-rush-common
 
 go 1.19
 
