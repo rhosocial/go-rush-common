@@ -18,18 +18,18 @@ type RedisClientPool struct {
 
 var RedisServerTurn atomic.Uint32
 
-// GetCurrentTurn 获得当前活动 redis 客户端顺序。如果没有活动客户端，则返回 nil。
+// GetCurrentTurn 获得当前活动 redis 客户端顺序。如果没有活动客户端，则报 ErrRedisClientNil 错误。
 // 注意！如果某个 Redis 服务器的权重大于1，则意味着该服务器将被询问多次。
 func (c *RedisClientPool) GetCurrentTurn() *uint8 {
 	if c.clients == nil || len(*c.clients) == 0 {
-		return nil
+		panic(ErrRedisClientNil)
 	}
 	now := RedisServerTurn.Load() % uint32(len(c.turnMap))
 	next := RedisServerTurn.Add(1) % uint32(len(c.turnMap))
 	status := *c.GetRedisServerStatus(context.Background(), c.turnMap[next])
 	for {
 		if now == next && !status.Valid {
-			return nil
+			panic(ErrRedisClientNil)
 		}
 		if now != next && !status.Valid {
 			next = RedisServerTurn.Add(1) % uint32(len(c.turnMap))
@@ -41,6 +41,7 @@ func (c *RedisClientPool) GetCurrentTurn() *uint8 {
 	return &c.turnMap[next]
 }
 
+// GetCurrentClient 获得当前活动 redis 客户端指针。如果没有活动客户端，则报 ErrRedisClientNil 错误。
 func (c *RedisClientPool) GetCurrentClient() *redis.Client {
 	if c.GetCurrentTurn() == nil {
 		return nil
