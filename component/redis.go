@@ -150,8 +150,19 @@ type RedisServerStatus struct {
 	Message string `json:"message"`
 }
 
+func (c *RedisClientPool) GetClient(idx *uint8) *redis.Client {
+	index := uint8(0)
+	if idx != nil {
+		index = *idx
+	}
+	if int(index) >= len(*c.clients) || (*c.clients)[index] == nil {
+		panic(ErrRedisClientNil)
+	}
+	return (*c.clients)[index]
+}
+
 func (c *RedisClientPool) GetRedisServerStatus(ctx context.Context, idx uint8) *RedisServerStatus {
-	client := (*c.clients)[idx]
+	client := c.GetClient(&idx)
 	if client == nil {
 		panic(ErrRedisClientNil)
 	}
