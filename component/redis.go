@@ -182,7 +182,7 @@ func (c *RedisClientPool) GetRedisServerStatus(ctx context.Context, idx uint8) *
 
 func (c *RedisClientPool) GetRedisServersStatus(ctx context.Context) map[uint8]RedisServerStatus {
 	result := make(map[uint8]RedisServerStatus)
-	for i := 0; i < len(*c.clients); i++ {
+	for i := 0; *c.clients != nil && i < len(*c.clients); i++ {
 		status := c.GetRedisServerStatus(ctx, uint8(i))
 		result[uint8(i)] = *status
 	}
