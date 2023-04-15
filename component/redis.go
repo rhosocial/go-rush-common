@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/go-playground/validator/v10"
-	"github.com/redis/go-redis/v9"
 	"net"
 	"sync/atomic"
 	"time"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/redis/go-redis/v9"
 )
 
 type RedisClientPool struct {
@@ -24,7 +25,7 @@ var ErrRedisClientsNotAvailable = errors.New("redis client(s) not available")
 // GetCurrentTurn 获得当前活动 redis 客户端顺序。如果没有活动客户端，则报 ErrRedisClientNil 错误。
 // 注意！如果某个 Redis 服务器的权重大于1，则意味着该服务器将被询问多次。
 func (c *RedisClientPool) GetCurrentTurn() *uint8 {
-	if c.clients == nil || len(*c.clients) == 0 {
+	if c == nil || c.clients == nil || len(*c.clients) == 0 {
 		panic(ErrRedisClientNil)
 	}
 	now := RedisServerTurn.Load() % uint32(len(c.turnMap))
@@ -112,6 +113,9 @@ func (e *EnvRedisServer) Validate() error {
 }
 
 func (e *EnvRedisServer) GetRedisOptions() *redis.Options {
+	if e == nil {
+		return nil
+	}
 	options := redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", e.Host, e.Port),
 		Username: e.Username,
@@ -151,6 +155,9 @@ type RedisServerStatus struct {
 }
 
 func (c *RedisClientPool) GetClient(idx *uint8) *redis.Client {
+	if c == nil || c.clients == nil {
+		panic(ErrRedisClientNil)
+	}
 	index := uint8(0)
 	if idx != nil {
 		index = *idx
