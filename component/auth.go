@@ -30,9 +30,15 @@ func authHandlerFunc(c *gin.Context) {
 	h := HeaderAuthorizationToken{}
 	err := c.ShouldBindHeader(&h)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusForbidden, GenericResponse{Code: 1, Message: MessageMissingHeaderXAuthorizationToken})
+		c.AbortWithStatusJSON(
+			http.StatusForbidden,
+			NewGenericResponse(c, 1, MessageMissingHeaderXAuthorizationToken, nil, nil),
+		)
 	} else if !h.validate("password") {
-		c.AbortWithStatusJSON(http.StatusForbidden, GenericResponse{Code: 1, Message: MessageInvalidAuthorizationToken})
+		c.AbortWithStatusJSON(
+			http.StatusForbidden,
+			NewGenericResponse(c, 1, MessageInvalidAuthorizationToken, nil, nil),
+		)
 	}
 	c.Next()
 }
