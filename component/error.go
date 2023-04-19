@@ -13,8 +13,10 @@ func ErrorHandler() gin.HandlerFunc {
 			if err := recover(); err != nil {
 				// 构造一个错误响应
 				response := GenericResponse{
-					Code:    http.StatusInternalServerError,
-					Message: http.StatusText(http.StatusInternalServerError),
+					Response: Response{
+						Code:    http.StatusInternalServerError,
+						Message: http.StatusText(http.StatusInternalServerError),
+					},
 				}
 
 				// 返回错误响应
