@@ -32,8 +32,7 @@ func TestValidatePassword(t *testing.T) {
 
 func setupRouterAuthRequired(useNextFunc func()) *gin.Engine {
 	r := gin.New()
-	r.Use(AuthRequired())
-	r.Use(func(c *gin.Context) {
+	r.Use(AppendRequestID(), AuthRequired(), func(c *gin.Context) {
 		useNextFunc()
 	})
 	r.GET("/ping", func(c *gin.Context) {
