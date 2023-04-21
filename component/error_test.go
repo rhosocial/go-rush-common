@@ -2,11 +2,12 @@ package component
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
 
 func setupRouterErrorHandler(useNextFunc func()) *gin.Engine {

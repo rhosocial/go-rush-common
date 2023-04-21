@@ -1,6 +1,12 @@
 package component
 
-import "github.com/gin-gonic/gin"
+import (
+	"encoding/json"
+	"io"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
 
 type Response struct {
 	RequestID uint32 `json:"request_id"`
@@ -16,6 +22,21 @@ type ResponseDataExtension struct {
 type GenericResponse struct {
 	Response
 	ResponseDataExtension
+}
+
+func UnmarshalResponseBody(resp *http.Response) (*Response, error) {
+	if resp == nil {
+		return nil, nil
+	}
+	body := make([]byte, resp.ContentLength)
+	if _, err := resp.Body.Read(body); err != nil && err != io.EOF {
+		return nil, err
+	}
+	var r Response
+	if err := json.Unmarshal(body, &r); err != nil {
+		return nil, err
+	}
+	return &r, nil
 }
 
 func NewGenericResponse(c *gin.Context, code uint32, message string, data any, extension any) *GenericResponse {

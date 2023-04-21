@@ -2,14 +2,15 @@ package component
 
 import (
 	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
-	"golang.org/x/crypto/bcrypt"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestValidatePassword(t *testing.T) {
