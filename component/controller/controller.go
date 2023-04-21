@@ -18,5 +18,5 @@ func (c *GenericController) NewResponseBase(r *gin.Context, code uint32, message
 }
 
 func (c *GenericController) NewResponseGeneric(r *gin.Context, code uint32, message string, data any, ext any) *response.Generic[any, any] {
-	return response.NewGeneric(r, code, message, data, ext)
+	return response.NewGeneric[any, any](r, code, message, data, ext)
 }

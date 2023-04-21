@@ -64,14 +64,14 @@ func NewBase(c *gin.Context, code uint32, message string) *Base {
 	return &r
 }
 
-func NewGeneric(c *gin.Context, code uint32, message string, data any, extension any) *Generic[interface{}, interface{}] {
-	r := Generic[interface{}, interface{}]{
+func NewGeneric[T1 interface{}, T2 interface{}](c *gin.Context, code uint32, message string, data T1, extension T2) *Generic[T1, T2] {
+	r := Generic[T1, T2]{
 		Base{
 			RequestID: c.Value(logger.ContextRequestID).(uint32),
 			Code:      code,
 			Message:   message,
 		},
-		DataAndExtension[interface{}, interface{}]{
+		DataAndExtension[T1, T2]{
 			Data:      data,
 			Extension: extension,
 		},

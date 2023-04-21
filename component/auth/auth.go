@@ -34,12 +34,12 @@ func authHandlerFunc(c *gin.Context) {
 	if err != nil {
 		c.AbortWithStatusJSON(
 			http.StatusForbidden,
-			response.NewGeneric(c, 1, MessageMissingHeaderXAuthorizationToken, nil, nil),
+			response.NewGeneric[any, any](c, 1, MessageMissingHeaderXAuthorizationToken, nil, nil),
 		)
 	} else if !h.validate("password") {
 		c.AbortWithStatusJSON(
 			http.StatusForbidden,
-			response.NewGeneric(c, 1, MessageInvalidAuthorizationToken, nil, nil),
+			response.NewGeneric[any, any](c, 1, MessageInvalidAuthorizationToken, nil, nil),
 		)
 	}
 	c.Next()
