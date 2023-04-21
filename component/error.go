@@ -12,7 +12,7 @@ func ErrorHandler() gin.HandlerFunc {
 		defer func() {
 			if err := recover(); err != nil {
 				// 构造一个错误响应
-				response := GenericResponse{
+				response := GenericResponse[interface{}, interface{}]{
 					Response: Response{
 						Code:    http.StatusInternalServerError,
 						Message: http.StatusText(http.StatusInternalServerError),

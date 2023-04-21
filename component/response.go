@@ -14,14 +14,14 @@ type Response struct {
 	Message   string `json:"message"`
 }
 
-type ResponseDataExtension struct {
-	Data      any `json:"data,omitempty"`
-	Extension any `json:"ext,omitempty"`
+type ResponseDataExtension[T1 interface{}, T2 interface{}] struct {
+	Data      T1 `json:"data,omitempty"`
+	Extension T2 `json:"ext,omitempty"`
 }
 
-type GenericResponse struct {
+type GenericResponse[T1 interface{}, T2 interface{}] struct {
 	Response
-	ResponseDataExtension
+	ResponseDataExtension[T1, T2]
 }
 
 func UnmarshalResponseBody(resp *http.Response) (*Response, error) {
@@ -39,14 +39,29 @@ func UnmarshalResponseBody(resp *http.Response) (*Response, error) {
 	return &r, nil
 }
 
-func NewGenericResponse(c *gin.Context, code uint32, message string, data any, extension any) *GenericResponse {
-	r := GenericResponse{
+func UnmarshalResponseDataExtension[T1 interface{}, T2 interface{}](resp *http.Response) (*GenericResponse[T1, T2], error) {
+	if resp == nil {
+		return nil, nil
+	}
+	body := make([]byte, resp.ContentLength)
+	if _, err := resp.Body.Read(body); err != nil && err != io.EOF {
+		return nil, err
+	}
+	var r GenericResponse[T1, T2]
+	if err := json.Unmarshal(body, &r); err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
+func NewGenericResponse(c *gin.Context, code uint32, message string, data any, extension any) *GenericResponse[interface{}, interface{}] {
+	r := GenericResponse[interface{}, interface{}]{
 		Response{
 			RequestID: c.Value(ContextRequestID).(uint32),
 			Code:      code,
 			Message:   message,
 		},
-		ResponseDataExtension{
+		ResponseDataExtension[interface{}, interface{}]{
 			Data:      data,
 			Extension: extension,
 		},

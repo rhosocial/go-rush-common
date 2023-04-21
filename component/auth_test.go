@@ -56,7 +56,7 @@ func TestUserAuthRequired(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusForbidden, w.Code)
-		body := GenericResponse{}
+		body := GenericResponse[interface{}, interface{}]{}
 		assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
 		assert.Equal(t, MessageMissingHeaderXAuthorizationToken, body.Message)
 		assert.Equal(t, false, useNext)
@@ -71,7 +71,7 @@ func TestUserAuthRequired(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusForbidden, w.Code)
-		body := GenericResponse{}
+		body := GenericResponse[interface{}, interface{}]{}
 		assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
 		assert.Equal(t, MessageInvalidAuthorizationToken, body.Message)
 		assert.Equal(t, false, useNext)
