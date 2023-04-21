@@ -1,4 +1,4 @@
-package component
+package redis
 
 import (
 	"context"
@@ -194,4 +194,9 @@ func (c *RedisClientPool) GetRedisServersStatus(ctx context.Context) map[uint8]R
 		result[uint8(i)] = *status
 	}
 	return result
+}
+
+func (c *RedisClientPool) FunctionLoadReplace(ctx context.Context, idx *uint8, code string) *redis.StringCmd {
+	client := c.GetClient(idx)
+	return client.FunctionLoadReplace(ctx, code)
 }

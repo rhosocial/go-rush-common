@@ -1,9 +1,11 @@
-package component
+package auth
 
 import (
-	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/rhosocial/go-rush-common/component/response"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func ValidatePassword(passHash string, password string) bool {
@@ -32,12 +34,12 @@ func authHandlerFunc(c *gin.Context) {
 	if err != nil {
 		c.AbortWithStatusJSON(
 			http.StatusForbidden,
-			NewGenericResponse(c, 1, MessageMissingHeaderXAuthorizationToken, nil, nil),
+			response.NewGeneric(c, 1, MessageMissingHeaderXAuthorizationToken, nil, nil),
 		)
 	} else if !h.validate("password") {
 		c.AbortWithStatusJSON(
 			http.StatusForbidden,
-			NewGenericResponse(c, 1, MessageInvalidAuthorizationToken, nil, nil),
+			response.NewGeneric(c, 1, MessageInvalidAuthorizationToken, nil, nil),
 		)
 	}
 	c.Next()

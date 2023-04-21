@@ -1,4 +1,4 @@
-package component
+package response
 
 import (
 	"encoding/json"
@@ -29,7 +29,7 @@ func TestUnmarshalResponseBody(t *testing.T) {
 		message := fmt.Sprintf("message_%d", code+1)
 		setupResponseNewServer(t, func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-			response := Response{
+			response := Base{
 				RequestID: requestID,
 				Code:      code,
 				Message:   message,
@@ -49,7 +49,7 @@ func TestUnmarshalResponseBody(t *testing.T) {
 			t.Error(err)
 			t.Fail()
 		}
-		body, err := UnmarshalResponseBody(resp)
+		body, err := UnmarshalResponseBodyBase(resp)
 		if err != nil && err != io.EOF {
 			t.Error(err)
 			t.Fail()
@@ -68,7 +68,7 @@ func TestUnmarshalResponseBody(t *testing.T) {
 		message := fmt.Sprintf("message_%d", code+1)
 		setupResponseNewServer(t, func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-			response := Response{
+			response := Base{
 				RequestID: requestID,
 				Code:      code,
 				Message:   message,
@@ -88,7 +88,7 @@ func TestUnmarshalResponseBody(t *testing.T) {
 			t.Error(err)
 			t.Fail()
 		}
-		body, err := UnmarshalResponseBody(resp)
+		body, err := UnmarshalResponseBodyBase(resp)
 		assert.NotNil(t, err, "error(s) should be reported due to invalid JSON string.")
 		assert.Nil(t, body, "the body of response should be nil.")
 	})
@@ -115,13 +115,13 @@ func TestUnmarshalResponseDataExtensionBody(t *testing.T) {
 		data := code + 2
 		setupResponseNewServer(t, func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-			response := GenericResponse[int, any]{
-				Response{
+			response := Generic[int, any]{
+				Base{
 					RequestID: requestID,
 					Code:      code,
 					Message:   message,
 				},
-				ResponseDataExtension[int, any]{
+				DataAndExtension[int, any]{
 					Data:      int(data),
 					Extension: nil,
 				},
@@ -141,7 +141,7 @@ func TestUnmarshalResponseDataExtensionBody(t *testing.T) {
 			t.Error(err)
 			t.Fail()
 		}
-		body, err := UnmarshalResponseDataExtension[int, any](resp)
+		body, err := UnmarshalResponseBodyBaseWithDataAndExtension[int, any](resp)
 		if err != nil && err != io.EOF {
 			t.Error(err)
 			t.Fail()
@@ -165,13 +165,13 @@ func TestUnmarshalResponseDataExtensionBody(t *testing.T) {
 		}
 		setupResponseNewServer(t, func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-			response := GenericResponse[StructWithScalar, any]{
-				Response{
+			response := Generic[StructWithScalar, any]{
+				Base{
 					RequestID: requestID,
 					Code:      code,
 					Message:   message,
 				},
-				ResponseDataExtension[StructWithScalar, any]{
+				DataAndExtension[StructWithScalar, any]{
 					Data:      data,
 					Extension: nil,
 				},
@@ -191,7 +191,7 @@ func TestUnmarshalResponseDataExtensionBody(t *testing.T) {
 			t.Error(err)
 			t.Fail()
 		}
-		body, err := UnmarshalResponseDataExtension[StructWithScalar, any](resp)
+		body, err := UnmarshalResponseBodyBaseWithDataAndExtension[StructWithScalar, any](resp)
 		if err != nil && err != io.EOF {
 			t.Error(err)
 			t.Fail()
@@ -217,13 +217,13 @@ func TestUnmarshalResponseDataExtensionBody(t *testing.T) {
 		}
 		setupResponseNewServer(t, func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-			response := GenericResponse[NestedStructWithScalarAndStruct, any]{
-				Response{
+			response := Generic[NestedStructWithScalarAndStruct, any]{
+				Base{
 					RequestID: requestID,
 					Code:      code,
 					Message:   message,
 				},
-				ResponseDataExtension[NestedStructWithScalarAndStruct, any]{
+				DataAndExtension[NestedStructWithScalarAndStruct, any]{
 					Data:      data,
 					Extension: nil,
 				},
@@ -243,7 +243,7 @@ func TestUnmarshalResponseDataExtensionBody(t *testing.T) {
 			t.Error(err)
 			t.Fail()
 		}
-		body, err := UnmarshalResponseDataExtension[NestedStructWithScalarAndStruct, any](resp)
+		body, err := UnmarshalResponseBodyBaseWithDataAndExtension[NestedStructWithScalarAndStruct, any](resp)
 		if err != nil && err != io.EOF {
 			t.Error(err)
 			t.Fail()

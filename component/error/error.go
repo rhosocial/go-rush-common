@@ -1,8 +1,10 @@
-package component
+package error
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	response2 "github.com/rhosocial/go-rush-common/component/response"
 )
 
 // ErrorHandler 定义一个中间件，用于捕获错误并统一返回
@@ -12,8 +14,8 @@ func ErrorHandler() gin.HandlerFunc {
 		defer func() {
 			if err := recover(); err != nil {
 				// 构造一个错误响应
-				response := GenericResponse[interface{}, interface{}]{
-					Response: Response{
+				response := response2.Generic[interface{}, interface{}]{
+					Base: response2.Base{
 						Code:    http.StatusInternalServerError,
 						Message: http.StatusText(http.StatusInternalServerError),
 					},

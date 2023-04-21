@@ -1,10 +1,11 @@
-package component
+package logger
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"sync/atomic"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // defaultLogFormatter is the default log format function Logger middleware uses.

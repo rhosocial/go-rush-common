@@ -1,4 +1,4 @@
-package component
+package auth
 
 import (
 	"encoding/json"
@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rhosocial/go-rush-common/component/logger"
+	"github.com/rhosocial/go-rush-common/component/response"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -33,7 +35,7 @@ func TestValidatePassword(t *testing.T) {
 
 func setupRouterAuthRequired(useNextFunc func()) *gin.Engine {
 	r := gin.New()
-	r.Use(AppendRequestID(), AuthRequired(), func(c *gin.Context) {
+	r.Use(logger.AppendRequestID(), AuthRequired(), func(c *gin.Context) {
 		useNextFunc()
 	})
 	r.GET("/ping", func(c *gin.Context) {
@@ -56,7 +58,7 @@ func TestUserAuthRequired(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusForbidden, w.Code)
-		body := GenericResponse[interface{}, interface{}]{}
+		body := response.Generic[interface{}, interface{}]{}
 		assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
 		assert.Equal(t, MessageMissingHeaderXAuthorizationToken, body.Message)
 		assert.Equal(t, false, useNext)
@@ -71,7 +73,7 @@ func TestUserAuthRequired(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusForbidden, w.Code)
-		body := GenericResponse[interface{}, interface{}]{}
+		body := response.Generic[interface{}, interface{}]{}
 		assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &body))
 		assert.Equal(t, MessageInvalidAuthorizationToken, body.Message)
 		assert.Equal(t, false, useNext)

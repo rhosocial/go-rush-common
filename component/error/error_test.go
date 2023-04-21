@@ -1,4 +1,4 @@
-package component
+package error
 
 import (
 	"errors"
