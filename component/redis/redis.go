@@ -12,31 +12,31 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type RedisClientPool struct {
+type ClientPool struct {
 	clients *[]*redis.Client
 	turnMap []uint8
 }
 
-var RedisServerTurn atomic.Uint32
+var ServerTurn atomic.Uint32
 
 var ErrRedisClientNil = errors.New("redis client nil")
 var ErrRedisClientsNotAvailable = errors.New("redis client(s) not available")
 
 // GetCurrentTurn 获得当前活动 redis 客户端顺序。如果没有活动客户端，则报 ErrRedisClientNil 错误。
 // 注意！如果某个 Redis 服务器的权重大于1，则意味着该服务器将被询问多次。
-func (c *RedisClientPool) GetCurrentTurn() *uint8 {
+func (c *ClientPool) GetCurrentTurn() *uint8 {
 	if c == nil || c.clients == nil || len(*c.clients) == 0 {
 		panic(ErrRedisClientNil)
 	}
-	now := RedisServerTurn.Load() % uint32(len(c.turnMap))
-	next := RedisServerTurn.Add(1) % uint32(len(c.turnMap))
+	now := ServerTurn.Load() % uint32(len(c.turnMap))
+	next := ServerTurn.Add(1) % uint32(len(c.turnMap))
 	status := *c.GetRedisServerStatus(context.Background(), c.turnMap[next])
 	for {
 		if now == next && !status.Valid {
 			panic(ErrRedisClientsNotAvailable)
 		}
 		if now != next && !status.Valid {
-			next = RedisServerTurn.Add(1) % uint32(len(c.turnMap))
+			next = ServerTurn.Add(1) % uint32(len(c.turnMap))
 			status = *c.GetRedisServerStatus(context.Background(), c.turnMap[next])
 			continue
 		}
@@ -46,7 +46,7 @@ func (c *RedisClientPool) GetCurrentTurn() *uint8 {
 }
 
 // GetCurrentClient 获得当前活动 redis 客户端指针。如果没有活动客户端，则报 ErrRedisClientNil 错误。
-func (c *RedisClientPool) GetCurrentClient() *redis.Client {
+func (c *ClientPool) GetCurrentClient() *redis.Client {
 	if c.GetCurrentTurn() == nil {
 		return nil
 	}
@@ -136,7 +136,7 @@ func (e *EnvRedisServer) GetRedisOptions() *redis.Options {
 	return &options
 }
 
-func (c *RedisClientPool) InitRedisClientPool(servers *[]EnvRedisServer) {
+func (c *ClientPool) InitRedisClientPool(servers *[]EnvRedisServer) {
 	redisClients := make([]*redis.Client, len(*servers))
 	turnMap := make([]uint8, 0)
 	for i, v := range *servers {
@@ -149,12 +149,12 @@ func (c *RedisClientPool) InitRedisClientPool(servers *[]EnvRedisServer) {
 	c.turnMap = turnMap
 }
 
-type RedisServerStatus struct {
+type ServerStatus struct {
 	Valid   bool   `json:"valid"`
 	Message string `json:"message"`
 }
 
-func (c *RedisClientPool) GetClient(idx *uint8) *redis.Client {
+func (c *ClientPool) GetClient(idx *uint8) *redis.Client {
 	if c == nil || c.clients == nil {
 		panic(ErrRedisClientNil)
 	}
@@ -168,13 +168,13 @@ func (c *RedisClientPool) GetClient(idx *uint8) *redis.Client {
 	return (*c.clients)[index]
 }
 
-func (c *RedisClientPool) GetRedisServerStatus(ctx context.Context, idx uint8) *RedisServerStatus {
+func (c *ClientPool) GetRedisServerStatus(ctx context.Context, idx uint8) *ServerStatus {
 	client := c.GetClient(&idx)
 	if client == nil {
 		panic(ErrRedisClientNil)
 	}
 	poolStats := client.PoolStats()
-	status := RedisServerStatus{
+	status := ServerStatus{
 		Valid: false,
 	}
 	if _, err := client.Ping(ctx).Result(); err == nil {
@@ -187,8 +187,8 @@ func (c *RedisClientPool) GetRedisServerStatus(ctx context.Context, idx uint8) *
 	return &status
 }
 
-func (c *RedisClientPool) GetRedisServersStatus(ctx context.Context) map[uint8]RedisServerStatus {
-	result := make(map[uint8]RedisServerStatus)
+func (c *ClientPool) GetRedisServersStatus(ctx context.Context) map[uint8]ServerStatus {
+	result := make(map[uint8]ServerStatus)
 	for i := 0; c != nil && c.clients != nil && i < len(*c.clients); i++ {
 		status := c.GetRedisServerStatus(ctx, uint8(i))
 		result[uint8(i)] = *status
@@ -196,7 +196,7 @@ func (c *RedisClientPool) GetRedisServersStatus(ctx context.Context) map[uint8]R
 	return result
 }
 
-func (c *RedisClientPool) FunctionLoadReplace(ctx context.Context, idx *uint8, code string) *redis.StringCmd {
+func (c *ClientPool) FunctionLoadReplace(ctx context.Context, idx *uint8, code string) *redis.StringCmd {
 	client := c.GetClient(idx)
 	return client.FunctionLoadReplace(ctx, code)
 }
