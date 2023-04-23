@@ -8,8 +8,8 @@ type EnvMySQLServer struct {
 	Username string `yaml:"Username" default:"root"`
 	Password string `yaml:"Password" default:"123456"`
 	DB       string `yaml:"DB" default:"node"`
-	Charset  string `yaml:"charset" default:"utf8mb4"`
-	Location string `yaml:"loc" default:"Local"`
+	Charset  string `yaml:"Charset" default:"utf8mb4"`
+	Location string `yaml:"Location" default:"Local"`
 }
 
 func (e EnvMySQLServer) GetDSN() string {
