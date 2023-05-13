@@ -39,12 +39,21 @@ func TestUnmarshalResponseBody(t *testing.T) {
 				t.Error(err)
 				t.Fail()
 			}
-			w.Write(body)
+			_, err = w.Write(body)
+			if err != nil {
+				t.Fatal(err)
+				return
+			}
 		})
 		defer teardownResponseNewServer(t)
 
 		resp, err := http.Get(server.URL)
-		defer resp.Body.Close()
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				t.Fatal(err)
+			}
+		}(resp.Body)
 		if err != nil {
 			t.Error(err)
 			t.Fail()
@@ -78,12 +87,21 @@ func TestUnmarshalResponseBody(t *testing.T) {
 				t.Error(err)
 				t.Fail()
 			}
-			w.Write(append(body, byte(65)))
+			_, err = w.Write(append(body, byte(65)))
+			if err != nil {
+				t.Fatal(err)
+				return
+			}
 		})
 		defer teardownResponseNewServer(t)
 
 		resp, err := http.Get(server.URL)
-		defer resp.Body.Close()
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				t.Fatal(err)
+			}
+		}(resp.Body)
 		if err != nil {
 			t.Error(err)
 			t.Fail()
@@ -131,12 +149,21 @@ func TestUnmarshalResponseDataExtensionBody(t *testing.T) {
 				t.Error(err)
 				t.Fail()
 			}
-			w.Write(body)
+			_, err = w.Write(body)
+			if err != nil {
+				t.Fatal(err)
+				return
+			}
 		})
 		defer teardownResponseNewServer(t)
 
 		resp, err := http.Get(server.URL)
-		defer resp.Body.Close()
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				t.Fatal(err)
+			}
+		}(resp.Body)
 		if err != nil {
 			t.Error(err)
 			t.Fail()
@@ -181,12 +208,21 @@ func TestUnmarshalResponseDataExtensionBody(t *testing.T) {
 				t.Error(err)
 				t.Fail()
 			}
-			w.Write(body)
+			_, err = w.Write(body)
+			if err != nil {
+				t.Fatal(err)
+				return
+			}
 		})
 		defer teardownResponseNewServer(t)
 
 		resp, err := http.Get(server.URL)
-		defer resp.Body.Close()
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				t.Fatal(err)
+			}
+		}(resp.Body)
 		if err != nil {
 			t.Error(err)
 			t.Fail()
@@ -233,12 +269,21 @@ func TestUnmarshalResponseDataExtensionBody(t *testing.T) {
 				t.Error(err)
 				t.Fail()
 			}
-			w.Write(body)
+			_, err = w.Write(body)
+			if err != nil {
+				t.Fatal(err)
+				return
+			}
 		})
 		defer teardownResponseNewServer(t)
 
 		resp, err := http.Get(server.URL)
-		defer resp.Body.Close()
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				t.Fatal(err)
+			}
+		}(resp.Body)
 		if err != nil {
 			t.Error(err)
 			t.Fail()
