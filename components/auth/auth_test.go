@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rhosocial/go-rush-common/component/logger"
-	"github.com/rhosocial/go-rush-common/component/response"
+	"github.com/rhosocial/go-rush-common/components/logger"
+	"github.com/rhosocial/go-rush-common/components/response"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 )

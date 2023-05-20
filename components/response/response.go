@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rhosocial/go-rush-common/component/logger"
+	"github.com/rhosocial/go-rush-common/components/logger"
 )
 
 type Base struct {

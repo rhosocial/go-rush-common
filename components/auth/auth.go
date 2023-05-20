@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rhosocial/go-rush-common/component/response"
+	"github.com/rhosocial/go-rush-common/components/response"
 	"golang.org/x/crypto/bcrypt"
 )
 

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	response2 "github.com/rhosocial/go-rush-common/component/response"
+	response2 "github.com/rhosocial/go-rush-common/components/response"
 )
 
 // ErrorHandler 定义一个中间件，用于捕获错误并统一返回
